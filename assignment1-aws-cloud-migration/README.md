@@ -6,6 +6,29 @@ This project deploys a 3-tier, scalable, and cost-effective architecture on AWS 
 
 ---
 
+## Terraform Folder Layout  
+_Modular by design – easy to reuse & extend_
+
+```text
+terraform/
+├── modules/                # reusable building blocks
+│   ├── vpc/                # VPC, subnets, NAT, IGW
+│   ├── alb/                # Application Load Balancer
+│   ├── rds/                # MySQL DB + subnet group + SG + bootstrap
+│   └── ec2_asg/            # Launch template, ASG, IAM & SG
+└── envs/                   # per-environment root modules
+    ├── dev/                # points to the shared modules above
+    └── prod/               # <- create when you need production
+```
+
+Why this layout?
+* **Clear separation of concerns** – each module encapsulates a single responsibility.
+* **DRY** – the same modules are referenced by both `dev` and `prod`, differing only by variables (instance size, multi-AZ, etc.).
+* **Safe iterations** – you iterate inside `envs/dev` without touching prod state.
+* **Future proof** – need a `staging` environment?  Just add `envs/stage` with its own tfvars.
+
+---
+
 ## How to Run
 
 ### Prerequisites
@@ -77,11 +100,8 @@ Below are a few runtime screenshots taken after `terraform apply`:
 
 | Component | Screenshot |
 |-----------|------------|
-| ALB target health (green) | ![ALB Targets](terraform/screenshot/alb-healthy.png) |
-| Application list page (`/users`) | ![App Users](terraform/screenshot/app-users.png) |
-| RDS instance in AWS console | ![RDS Instance](terraform/screenshot/rds-instance.png) |
-
-_All screenshots live under `terraform/screenshot/` so you can replace or extend them easily._
+| ALB target health (green) | ![ALB Targets](terraform/screenshot/alb-resource-map.png) |
+| Application list page (`/users`) | ![App Users](terraform/screenshot/list_user.png) |
 
 ---
 

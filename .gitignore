@@ -3,3 +3,5 @@ out.json
 .terraform.lock.hcl
 docs/
 node_modules
+terraform.tfstate.backup
+.terraform.tfstate.lock.info
