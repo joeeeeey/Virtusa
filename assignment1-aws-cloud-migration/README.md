@@ -70,3 +70,25 @@ This project deploys a 3-tier, scalable, and cost-effective architecture on AWS 
 *   **Auto Scaling Group (ASG)**: The application is deployed on an ASG that can automatically scale the number of instances based on CPU utilization. The scaling policy is set to a target of 50% CPU.
 *   **Application Load Balancer (ALB)**: An ALB distributes traffic across the instances in the ASG, ensuring high availability and scalability.
 *   **Decoupled Tiers**: The 3-tier architecture (web/ALB, app/EC2, db/RDS) allows each layer to be scaled independently. For example, the database instance class can be scaled up without affecting the application tier.
+
+### Demo Screenshots
+
+Below are a few runtime screenshots taken after `terraform apply`:
+
+| Component | Screenshot |
+|-----------|------------|
+| ALB target health (green) | ![ALB Targets](terraform/screenshot/alb-healthy.png) |
+| Application list page (`/users`) | ![App Users](terraform/screenshot/app-users.png) |
+| RDS instance in AWS console | ![RDS Instance](terraform/screenshot/rds-instance.png) |
+
+_All screenshots live under `terraform/screenshot/` so you can replace or extend them easily._
+
+---
+
+## Deliverables Checklist
+
+- [x] Terraform code builds the full 3-tier stack in <15 min
+- [x] ALB URL outputs after apply and serves the Node.js CRUD app
+- [x] Cost-optimised (single NAT, Spot instances, gp3.)
+- [x] Automated DB bootstrap & sample table creation
+- [x] Module-based layout ready for additional environments
