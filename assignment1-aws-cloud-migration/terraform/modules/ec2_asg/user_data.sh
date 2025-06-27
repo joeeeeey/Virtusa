@@ -1,40 +1,76 @@
 #!/bin/bash -xe
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
-# Install Node.js 18
-yum update -y
-yum install -y gcc-c++ make
-curl -sL https://rpm.nodesource.com/setup_18.x | sudo -E bash -
-yum install -y nodejs
+echo "=== user-data start ==="
 
-# Install Git
-yum install -y git
-yum install -y jq
+# Update package index and upgrade
+apt-get update -y
+apt-get upgrade -y
+
+# Install base packages
+apt-get install -y curl git jq build-essential
+
+# Install Node.js 20 from NodeSource
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt-get install -y nodejs
+
+# Verify versions
+echo "Node: $(node -v)  NPM: $(npm -v)"
 
 # Install PM2
-npm install pm2 -g
+npm install -g pm2
 
-# Get app code
-cd /home/ec2-user
-git clone https://github.com/chapagain/nodejs-mysql-crud.git app
+# Switch to ubuntu user home
+sudo -u ubuntu bash <<'EOSU'
+set -xe
+cd /home/ubuntu
+
+# Clone app if not exists
+if [ ! -d app ]; then
+  git clone https://github.com/chapagain/nodejs-mysql-crud.git app
+fi
 cd app
 
-# Get DB credentials from Secrets Manager
-SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${db_secret_arn} --region ${region} --query SecretString --output text)
+# Create runtime config with RDS credentials
+cat > config.js <<CFG
+module.exports = {
+  database: {
+    host: '${db_host}',
+    user: 'admin',
+    password: '${db_password}',
+    port: 3306,
+    db: '${db_name}'
+  },
+  server: {
+    host: '0.0.0.0',
+    port: '3000'
+  }
+}
+CFG
 
-# Set environment variables for the app
-export DB_HOST=$(echo $SECRET_JSON | jq -r .host)
-export DB_USER=$(echo $SECRET_JSON | jq -r .username)
-export DB_PASSWORD=$(echo $SECRET_JSON | jq -r .password)
-export DB_NAME=$(echo $SECRET_JSON | jq -r .dbname)
-
-# Install app dependencies
+# Install dependencies
 npm install
 
-# Start the app with PM2
-pm2 start app.js --name "nodejs-crud"
-pm2 startup
-pm2 save
+# Start app with PM2 using env vars
+cat > ecosystem.config.js <<EOF
+module.exports = {
+  apps : [{
+    name   : 'nodejs-crud',
+    script : 'app.js',
+    env: {
+      DB_HOST: '${db_host}',
+      DB_USER: 'admin',
+      DB_PASSWORD: '${db_password}',
+      DB_NAME: '${db_name}',
+      PORT: 3000
+    }
+  }]
+};
+EOF
 
-# Ensure the permissions are correct for ec2-user
-chown -R ec2-user:ec2-user /home/ec2-user/app 
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup systemd -u ubuntu --hp /home/ubuntu
+EOSU
+
+echo "=== user-data end ===" 

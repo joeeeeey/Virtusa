@@ -30,28 +30,16 @@ resource "aws_security_group" "db" {
   )
 }
 
-resource "aws_secretsmanager_secret" "db_creds" {
-  name = "${var.project_name}-rds-creds"
-  recovery_window_in_days = 0 # Not recommended for prod
-}
+# Temporarily commented out to resolve API timeout issues
+# resource "aws_secretsmanager_secret" "db_creds" {
+#   name = "${var.project_name}-rds-creds"
+#   recovery_window_in_days = 0 # Not recommended for prod
+# }
 
 resource "random_password" "master" {
   length           = 16
   special          = true
   override_special = "!#$%&*()-_=+[]{}<>:?"
-}
-
-resource "aws_secretsmanager_secret_version" "db_creds_initial" {
-  secret_id     = aws_secretsmanager_secret.db_creds.id
-  secret_string = jsonencode({
-    username = "admin"
-    password = random_password.master.result
-    engine   = "mysql"
-  })
-  
-  lifecycle {
-    ignore_changes = [secret_string]
-  }
 }
 
 resource "aws_db_instance" "main" {
@@ -74,7 +62,7 @@ resource "aws_db_instance" "main" {
   skip_final_snapshot    = true
   
   backup_retention_period = 7
-  performance_insights_enabled = true
+  performance_insights_enabled = var.db_instance_class == "db.t3.micro" ? false : true
 
   tags = merge(
     var.common_tags,
@@ -84,16 +72,17 @@ resource "aws_db_instance" "main" {
   )
 }
 
-resource "aws_secretsmanager_secret_version" "db_creds" {
-  secret_id     = aws_secretsmanager_secret.db_creds.id
-  secret_string = jsonencode({
-    username = "admin"
-    password = random_password.master.result
-    engine   = "mysql"
-    host     = aws_db_instance.main.address
-    port     = aws_db_instance.main.port
-    dbname   = aws_db_instance.main.db_name
-  })
-  
-  depends_on = [aws_db_instance.main]
-} 
+# Temporarily commented out to resolve API timeout issues
+# resource "aws_secretsmanager_secret_version" "db_creds" {
+#   secret_id     = aws_secretsmanager_secret.db_creds.id
+#   secret_string = jsonencode({
+#     username = "admin"
+#     password = random_password.master.result
+#     engine   = "mysql"
+#     host     = aws_db_instance.main.address
+#     port     = aws_db_instance.main.port
+#     dbname   = aws_db_instance.main.db_name
+#   })
+#   
+#   depends_on = [aws_db_instance.main]
+# } 

@@ -49,7 +49,11 @@ module "ec2_asg" {
   private_app_subnet_ids = module.vpc.private_app_subnet_ids
   alb_security_group_id  = module.alb.alb_security_group_id
   target_group_arn       = module.alb.target_group_arn
-  db_secret_arn          = module.rds.db_secret_arn
+  
+  # Pass database connection info directly
+  db_host     = module.rds.db_host
+  db_password = module.rds.db_password
+  db_name     = module.rds.db_name
 }
 
 resource "aws_security_group_rule" "app_to_db" {

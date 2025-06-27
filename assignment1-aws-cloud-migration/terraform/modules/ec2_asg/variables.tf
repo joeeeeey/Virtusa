@@ -29,8 +29,25 @@ variable "target_group_arn" {
   type        = string
 }
 
-variable "db_secret_arn" {
-  description = "ARN of the Secrets Manager secret for the DB credentials."
+# Temporarily commented out while not using Secrets Manager
+# variable "db_secret_arn" {
+#   description = "ARN of the Secrets Manager secret for the DB credentials."
+#   type        = string
+# }
+
+variable "db_host" {
+  description = "Database host endpoint."
+  type        = string
+}
+
+variable "db_password" {
+  description = "Database password."
+  type        = string
+  sensitive   = true
+}
+
+variable "db_name" {
+  description = "Database name."
   type        = string
 }
 
@@ -50,6 +67,12 @@ variable "asg_max_size" {
   description = "Maximum number of instances in the ASG."
   type        = number
   default     = 4
+}
+
+variable "asg_target_cpu" {
+  description = "Target CPU utilization for auto scaling."
+  type        = number
+  default     = 50.0
 }
 
 variable "app_port" {

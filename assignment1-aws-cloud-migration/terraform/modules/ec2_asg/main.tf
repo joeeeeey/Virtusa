@@ -1,10 +1,10 @@
-data "aws_ami" "amazon_linux_2" {
+data "aws_ami" "ubuntu2204" {
   most_recent = true
-  owners      = ["amazon"]
+  owners      = ["099720109477"] # Canonical
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
   }
 }
 
@@ -60,18 +60,42 @@ resource "aws_iam_role" "instance_role" {
   )
 }
 
-resource "aws_iam_role_policy" "secrets_manager_access" {
-  name = "${var.project_name}-secrets-manager-access"
+# Temporarily commented out while not using Secrets Manager
+# resource "aws_iam_role_policy" "secrets_manager_access" {
+#   name = "${var.project_name}-secrets-manager-access"
+#   role = aws_iam_role.instance_role.id
+#
+#   policy = jsonencode({
+#     Version   = "2012-10-17",
+#     Statement = [
+#       {
+#         Action   = "secretsmanager:GetSecretValue",
+#         Effect   = "Allow",
+#         Resource = var.db_secret_arn
+#       },
+#       # Required for SSM Agent to work
+#       {
+#         Action = [
+#           "ssm:UpdateInstanceInformation",
+#           "ssmmessages:CreateControlChannel",
+#           "ssmmessages:CreateDataChannel",
+#           "ssmmessages:OpenControlChannel",
+#           "ssmmessages:OpenDataChannel"
+#         ],
+#         Effect   = "Allow",
+#         Resource = "*"
+#       }
+#     ]
+#   })
+# }
+
+resource "aws_iam_role_policy" "ssm_access" {
+  name = "${var.project_name}-ssm-access"
   role = aws_iam_role.instance_role.id
 
   policy = jsonencode({
     Version   = "2012-10-17",
     Statement = [
-      {
-        Action   = "secretsmanager:GetSecretValue",
-        Effect   = "Allow",
-        Resource = var.db_secret_arn
-      },
       # Required for SSM Agent to work
       {
         Action = [
@@ -102,7 +126,7 @@ resource "aws_iam_instance_profile" "instance_profile" {
 
 resource "aws_launch_template" "main" {
   name_prefix   = "${var.project_name}-"
-  image_id      = data.aws_ami.amazon_linux_2.id
+  image_id      = data.aws_ami.ubuntu2204.id
   instance_type = var.instance_type
 
   iam_instance_profile {
@@ -115,8 +139,10 @@ resource "aws_launch_template" "main" {
   }
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    db_secret_arn = var.db_secret_arn,
-    region        = "ap-southeast-1" # This should ideally be a variable
+    db_host     = var.db_host,
+    db_password = var.db_password,
+    db_name     = var.db_name,
+    region      = "ap-southeast-1" # This should ideally be a variable
   }))
 
   tags = merge(
@@ -136,16 +162,12 @@ resource "aws_autoscaling_group" "main" {
 
   target_group_arns = [var.target_group_arn]
 
-  launch_template {
-    id      = aws_launch_template.main.id
-    version = "$Latest"
-  }
-
   # Mixed instances policy for cost savings
   mixed_instances_policy {
     launch_template {
       launch_template_specification {
         launch_template_id = aws_launch_template.main.id
+        version           = "$Latest"
       }
     }
 
@@ -167,11 +189,11 @@ resource "aws_autoscaling_policy" "cpu_scaling" {
   name                   = "${var.project_name}-cpu-scaling-policy"
   autoscaling_group_name = aws_autoscaling_group.main.name
   policy_type            = "TargetTrackingScaling"
-  
+
   target_tracking_configuration {
     predefined_metric_specification {
       predefined_metric_type = "ASGAverageCPUUtilization"
     }
-    target_value = 50.0
+    target_value = var.asg_target_cpu
   }
 } 
