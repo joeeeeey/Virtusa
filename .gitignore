@@ -1,3 +1,5 @@
 out.json
 .terraform
 .terraform.lock.hcl
+docs/
+node_modules
