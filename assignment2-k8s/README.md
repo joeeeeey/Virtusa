@@ -84,6 +84,8 @@ kubectl patch deployment metrics-server -n kube-system \
 
 ### 3. Build and Load Application Image
 ```bash
+cd app
+
 # Build the Docker image
 DOCKER_BUILDKIT=1 docker build -t nodejs-crud-app:1.0 .
 
@@ -273,23 +275,6 @@ kind delete cluster --name symbiosis
 - ✅ **Service Discovery**: Cross-namespace communication established
 - ✅ **Ingress**: External access configured via Ingress controller
 - ✅ **Security**: Proper secret management and namespace isolation
-
-## 🔍 Troubleshooting
-
-### Common Issues:
-
-1. **Pods stuck in Pending**: Check PVC binding and storage availability
-2. **Cross-namespace connectivity**: Verify FQDN in ConfigMap
-3. **HPA not scaling**: Ensure metrics-server is running and CPU requests are set
-4. **Ingress not accessible**: Verify Ingress controller is properly installed
-
-### Debug Commands:
-```bash
-kubectl logs -n mysql deployment/mysql
-kubectl logs -n nodejs-crud deployment/nodejs-crud
-kubectl describe pod -n nodejs-crud -l app=nodejs-crud
-kubectl get events -A --sort-by='.lastTimestamp'
-```
 
 ---
 
