@@ -2,6 +2,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: nodejs-crud-hpa
+  namespace: nodejs-crud
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
