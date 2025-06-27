@@ -18,15 +18,13 @@ This repository contains **two independent solutions** matching the CC4.0 DevOps
 * RDS MySQL is bootstrapped with the required `users` table on first boot.
 * Screenshots live in `assignment1-aws-cloud-migration/terraform/screenshot/`.
 
-![ALB healthy](assignment1-aws-cloud-migration/terraform/screenshot/alb-healthy.png)
+![ALB healthy](assignment1-aws-cloud-migration/terraform/screenshot/alb-resource-map.png)
 
 ### Assignment 2 highlights
 
 * Minikube manifests include Deployment, Service, Ingress and PVC.
 * A liveness probe checks the root path returns **200**.
 * Example of horizontal scaling via `kubectl scale` and notes on HPA.
-
-![k8s service](assignment2-k8s/screenshots/service.png)
 
 ---
 
@@ -36,6 +34,7 @@ This repository contains **two independent solutions** matching the CC4.0 DevOps
 # Assignment 1 – AWS
 cd assignment1-aws-cloud-migration/terraform/envs/dev
 terraform init            # backend config if you want S3 state
+terraform plan
 terraform apply -auto-approve
 
 # Assignment 2 – Kubernetes
