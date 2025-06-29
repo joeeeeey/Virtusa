@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-config
+  namespace: mysql
+data:
+  init.sql: |
+    -- Fix MySQL 8.0 authentication issue for Node.js compatibility
+    ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'rootpwd';
+    FLUSH PRIVILEGES;
+    
+    -- Create database and tables
+    CREATE DATABASE IF NOT EXISTS crud_db;
+    USE crud_db;
+    DROP TABLE IF EXISTS users;
+    CREATE TABLE IF NOT EXISTS users (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      name VARCHAR(50),
+      email VARCHAR(50),
+      age VARCHAR(25)
+    );
+    
+    -- Optional: Insert some sample data
+    INSERT INTO users (name, email, age) VALUES 
+    ('John Doe', 'john@example.com', '25'),
+    ('Jane Smith', 'jane@example.com', '30'); 

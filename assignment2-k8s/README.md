@@ -71,31 +71,21 @@ EOF
 kind create cluster --name symbiosis --config kind-cluster.yaml
 ```
 
-### 2. Install Required Add-ons
+### 2. Build and Load Application Image
 ```bash
-# Ingress controller
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-
-# Metrics-server (required for HPA)
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-kubectl patch deployment metrics-server -n kube-system \
-  --type json -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
-```
-
-### 3. Build and Load Application Image
-```bash
-cd app
-
+# cd app
+pushd app
 # Build the Docker image
 DOCKER_BUILDKIT=1 docker build -t nodejs-crud-app:1.0 .
 
 # Load image into kind cluster
 kind load docker-image nodejs-crud-app:1.0 --name symbiosis
+popd
 ```
 
-### 4. Deploy Application with Proper Namespaces
+### 3. Deploy Application with Proper Namespaces
 ```bash
-cd k8s
+pushd k8s
 chmod +x deploy-namespaced.sh
 ./deploy-namespaced.sh
 ```
@@ -255,10 +245,7 @@ assignment2-k8s/
 ## 🧹 Cleanup
 
 ```bash
-# Remove all deployed resources
-kubectl delete namespace mysql nodejs-crud
-
-# Or use the complete cleanup
+# complete cleanup
 kubectl delete -f k8s/
 
 # Destroy the kind cluster

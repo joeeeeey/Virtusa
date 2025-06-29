@@ -4,6 +4,14 @@ var app = express()
 // SHOW LIST OF USERS
 app.get('/', function(req, res, next) {
 	req.getConnection(function(error, conn) {
+		if (error) {
+			console.error('Database connection error:', error);
+			return res.status(500).json({error: 'Database connection failed', details: error.message});
+		}
+		if (!conn) {
+			console.error('Database connection is undefined');
+			return res.status(500).json({error: 'Database connection is undefined'});
+		}
 		conn.query('SELECT * FROM users ORDER BY id DESC',function(err, rows, fields) {
 			//if(err) throw err
 			if (err) {
@@ -60,6 +68,14 @@ app.post('/add', function(req, res, next){
 		}
 		
 		req.getConnection(function(error, conn) {
+			if (error) {
+				console.error('Database connection error:', error);
+				return res.status(500).json({error: 'Database connection failed', details: error.message});
+			}
+			if (!conn) {
+				console.error('Database connection is undefined');
+				return res.status(500).json({error: 'Database connection is undefined'});
+			}
 			conn.query('INSERT INTO users SET ?', user, function(err, result) {
 				//if(err) throw err
 				if (err) {
@@ -109,6 +125,14 @@ app.post('/add', function(req, res, next){
 // SHOW EDIT USER FORM
 app.get('/edit/(:id)', function(req, res, next){
 	req.getConnection(function(error, conn) {
+		if (error) {
+			console.error('Database connection error:', error);
+			return res.status(500).json({error: 'Database connection failed', details: error.message});
+		}
+		if (!conn) {
+			console.error('Database connection is undefined');
+			return res.status(500).json({error: 'Database connection is undefined'});
+		}
 		conn.query('SELECT * FROM users WHERE id = ?', [req.params.id], function(err, rows, fields) {
 			if(err) throw err
 			
@@ -158,6 +182,14 @@ app.put('/edit/(:id)', function(req, res, next) {
 		}
 		
 		req.getConnection(function(error, conn) {
+			if (error) {
+				console.error('Database connection error:', error);
+				return res.status(500).json({error: 'Database connection failed', details: error.message});
+			}
+			if (!conn) {
+				console.error('Database connection is undefined');
+				return res.status(500).json({error: 'Database connection is undefined'});
+			}
 			conn.query('UPDATE users SET ? WHERE id = ' + req.params.id, user, function(err, result) {
 				//if(err) throw err
 				if (err) {
@@ -212,6 +244,14 @@ app.delete('/delete/(:id)', function(req, res, next) {
 	var user = { id: req.params.id }
 	
 	req.getConnection(function(error, conn) {
+		if (error) {
+			console.error('Database connection error:', error);
+			return res.status(500).json({error: 'Database connection failed', details: error.message});
+		}
+		if (!conn) {
+			console.error('Database connection is undefined');
+			return res.status(500).json({error: 'Database connection is undefined'});
+		}
 		conn.query('DELETE FROM users WHERE id = ' + req.params.id, user, function(err, result) {
 			//if(err) throw err
 			if (err) {
