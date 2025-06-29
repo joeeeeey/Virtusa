@@ -29,6 +29,16 @@ Why this layout?
 
 ---
 
+## Deliverables Checklist
+
+- [x] Terraform code builds the full 3-tier stack in <15 min
+- [x] ALB URL outputs after apply and serves the Node.js CRUD app
+- [x] Cost-optimised (single NAT, Spot instances, gp3.)
+- [x] Automated DB bootstrap & sample table creation
+- [x] Module-based layout ready for additional environments
+
+---
+
 ## How to Run
 
 ### Prerequisites
@@ -48,12 +58,6 @@ Why this layout?
     You will need to configure the S3 backend by providing your bucket name and DynamoDB table name.
     ```bash
     terraform init
-
-    <!-- terraform init \
-        -backend-config="bucket=<YOUR_S3_BUCKET_NAME>" \
-        -backend-config="key=symbiosis/dev/terraform.tfstate" \
-        -backend-config="region=<YOUR_AWS_REGION>" \
-        -backend-config="dynamodb_table=<YOUR_DYNAMODB_TABLE_NAME>" -->
     ```
 
 3.  **Plan the deployment:**
@@ -102,13 +106,3 @@ Below are a few runtime screenshots taken after `terraform apply`:
 |-----------|------------|
 | ALB target health (green) | ![ALB Targets](terraform/screenshot/alb-resource-map.png) |
 | Application list page (`/users`) | ![App Users](terraform/screenshot/list_user.png) |
-
----
-
-## Deliverables Checklist
-
-- [x] Terraform code builds the full 3-tier stack in <15 min
-- [x] ALB URL outputs after apply and serves the Node.js CRUD app
-- [x] Cost-optimised (single NAT, Spot instances, gp3.)
-- [x] Automated DB bootstrap & sample table creation
-- [x] Module-based layout ready for additional environments

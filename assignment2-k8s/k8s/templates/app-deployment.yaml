@@ -1,18 +1,12 @@
-apiVersion: v1
-kind: Secret
-metadata:
-  name: mysql-secret-ref
-  namespace: nodejs-crud
-stringData:
-  MYSQL_ROOT_PASSWORD: rootpwd
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nodejs-crud
-  namespace: nodejs-crud
+  namespace: {{ .Values.appNamespace }}
+  labels:
+    app: nodejs-crud
 spec:
-  replicas: 1
+  replicas: {{ .Values.nodeApp.replicas }}
   selector:
     matchLabels:
       app: nodejs-crud
@@ -23,7 +17,7 @@ spec:
     spec:
       containers:
       - name: nodejs-crud
-        image: nodejs-crud-app:1.0
+        image: "{{ .Values.nodeApp.image }}:{{ .Values.nodeApp.tag }}"
         env:
         - name: DB_HOST
           valueFrom:
@@ -49,11 +43,11 @@ spec:
         - containerPort: 3000
         resources:
           requests:
-            cpu: 100m
-            memory: 128Mi
+            cpu: {{ .Values.nodeApp.resources.requests.cpu }}
+            memory: {{ .Values.nodeApp.resources.requests.memory }}
           limits:
-            cpu: 250m
-            memory: 256Mi
+            cpu: {{ .Values.nodeApp.resources.limits.cpu }}
+            memory: {{ .Values.nodeApp.resources.limits.memory }}
         livenessProbe:
           httpGet:
             path: "/"
@@ -71,7 +65,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: nodejs-crud
-  namespace: nodejs-crud
+  namespace: {{ .Values.appNamespace }}
 spec:
   type: ClusterIP
   ports:

@@ -1,0 +1,34 @@
+# -- Namespace for MySQL resources
+mysqlNamespace: mysql
+# -- Namespace for the application resources
+appNamespace: nodejs-crud
+
+mysql:
+  image: docker.m.daocloud.io/mysql
+  tag: "8.0"
+  rootPassword: rootpwd
+  pvcStorage: 5Gi
+  database: crud_db
+
+nodeApp:
+  image: nodejs-crud-app
+  tag: "1.0"
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  averageUtilization: 50
+
+ingress:
+  enabled: true
+  # If empty, Ingress will not specify a host (useful for local clusters like kind/minikube)
+  host: "" 

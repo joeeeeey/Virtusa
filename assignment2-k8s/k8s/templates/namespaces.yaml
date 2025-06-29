@@ -1,0 +1,13 @@
+{{- if .Values.mysqlNamespace }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.mysqlNamespace }}
+{{- end }}
+---
+{{- if .Values.appNamespace }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.appNamespace }}
+{{- end }} 

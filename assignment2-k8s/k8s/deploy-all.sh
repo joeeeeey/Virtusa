@@ -2,14 +2,11 @@
 
 echo "🧹 Cleaning up existing deployments..."
 
-# Delete existing resources from default namespace
-kubectl delete deployment mysql nodejs-crud 2>/dev/null || true
-kubectl delete service mysql nodejs-crud 2>/dev/null || true
-kubectl delete pvc mysql-pvc 2>/dev/null || true
-kubectl delete secret mysql-secret 2>/dev/null || true
-kubectl delete configmap app-config mysql-init-config 2>/dev/null || true
-kubectl delete hpa nodejs-crud-hpa 2>/dev/null || true
-kubectl delete ingress nodejs-crud-ingress 2>/dev/null || true
+# If a previous Helm release exists, uninstall it to ensure a clean slate
+helm uninstall nodejs-mysql -n nodejs-crud 2>/dev/null || true
+
+# Also attempt to delete the namespaces in case they remain after an uninstall
+kubectl delete namespace mysql nodejs-crud 2>/dev/null || true
 
 echo "⏳ Waiting for cleanup to complete..."
 sleep 10
@@ -43,27 +40,20 @@ kubectl apply -f metrics-server.yaml
 kubectl patch deployment metrics-server -n kube-system \
   --type json -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
 
-kubectl apply -f 00-namespaces.yaml
+echo "🚀 Deploying or upgrading Helm chart..."
+# The chart root is the directory where this script resides
+CHART_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-echo "📦 Deploying MySQL components to 'mysql' namespace..."
-kubectl apply -f secret-mysql.yaml
-kubectl apply -f pvc-mysql.yaml
-kubectl apply -f mysql-init-config.yaml
-kubectl apply -f mysql-deploy.yaml
+# Install/upgrade the Helm release
+helm upgrade --install nodejs-mysql "$CHART_DIR" \
+  --namespace nodejs-crud \
+  --create-namespace
 
 echo "⏳ Waiting for MySQL to be ready..."
-kubectl wait --for=condition=ready pod -l app=mysql -n mysql --timeout=120s
-
-echo "🚀 Deploying Node.js app components to 'nodejs-crud' namespace..."
-kubectl apply -f configmap-app.yaml
-kubectl apply -f app-deploy.yaml
-kubectl apply -f hpa.yaml
-
-echo "🌐 Deploying Ingress (with webhook validation)..."
-kubectl apply -f ingress.yaml
+kubectl wait --for=condition=ready pod -l app=mysql -n mysql --timeout=240s
 
 echo "⏳ Waiting for Node.js app to be ready..."
-kubectl wait --for=condition=ready pod -l app=nodejs-crud -n nodejs-crud --timeout=120s
+kubectl wait --for=condition=ready pod -l app=nodejs-crud -n nodejs-crud --timeout=240s
 
 echo "✅ Deployment complete!"
 echo ""

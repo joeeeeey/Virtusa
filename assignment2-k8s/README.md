@@ -13,6 +13,8 @@ This assignment demonstrates the containerization and deployment of a Node.js CR
 
 ## 🏗️ Architecture & Namespace Design
 
+![Architecture Diagram](diagrams/k8s-architecture.png)
+
 ### **Namespace Organization**
 ```
 ┌─────────────────────────────────────────┐
@@ -29,8 +31,7 @@ This assignment demonstrates the containerization and deployment of a Node.js CR
 │  ├── Node.js Service                    │
 │  ├── Application ConfigMap              │
 │  ├── MySQL Secret Reference             │
-│  ├── Horizontal Pod Autoscaler          │
-│  └── Ingress Controller                 │
+│  ├── Horizontal Pod Autoscaler          │         │
 └─────────────────────────────────────────┘
 ```
 
@@ -39,88 +40,38 @@ This assignment demonstrates the containerization and deployment of a Node.js CR
 - Secrets are duplicated in each namespace for security isolation
 - Services are exposed only within their respective namespaces
 
-## 🚀 Quick Start
-
-### Prerequisites
-- Docker Desktop or Docker Engine
-- kind (Kubernetes in Docker)
-- kubectl CLI tool
-
-### 1. Create the Kind Cluster
-```bash
-# Create cluster configuration
-cat <<EOF > kind-cluster.yaml
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-nodes:
-  - role: control-plane
-    kubeadmConfigPatches:
-    - |
-      kind: InitConfiguration
-      nodeRegistration:
-        kubeletExtraArgs:
-          node-labels: "ingress-ready=true"
-    extraPortMappings:
-    - containerPort: 80
-      hostPort: 80
-    - containerPort: 443
-      hostPort: 443
-EOF
-
-# Create the cluster
-kind create cluster --name symbiosis --config kind-cluster.yaml
+## 🗂️ File Structure
+```
+assignment2-k8s/
+├── k8s/                  # Helm chart + helper script
+│   ├── Chart.yaml        # Chart metadata
+│   ├── values.yaml       # Default configuration values
+│   ├── templates/        # Kubernetes manifests (templated)
+│   │   ├── namespaces.yaml
+│   │   ├── mysql-*       # MySQL Deployment / PVC / Config / Secret
+│   │   ├── app-*         # Node.js Deployment / Service / ConfigMap / Secret
+│   │   ├── hpa.yaml      # Horizontal Pod Autoscaler
+│   │   └── ingress.yaml  # Ingress resource
+│   └── deploy-all.sh  # Automates ingress-nginx setup + Helm release
+├── screenshots/          # Documentation screenshots
+├── app/                  # Node.js CRUD source & Dockerfile
+├── kind-cluster.yaml     # Kind cluster configuration
+└── README.md             # This documentation
 ```
 
-### 2. Build and Load Application Image
-```bash
-# cd app
-pushd app
-# Build the Docker image
-DOCKER_BUILDKIT=1 docker build -t nodejs-crud-app:1.0 .
 
-# Load image into kind cluster
-kind load docker-image nodejs-crud-app:1.0 --name symbiosis
-popd
-```
+## 🎯 Assignment Objectives Achieved
 
-### 3. Deploy Application with Proper Namespaces
-```bash
-pushd k8s
-chmod +x deploy-namespaced.sh
-./deploy-namespaced.sh
-```
+- ✅ **Containerization**: Node.js CRUD app properly containerized
+- ✅ **Namespace Organization**: MySQL and app components separated
+- ✅ **Health Checks**: Liveness and readiness probes implemented
+- ✅ **Scaling**: HPA configured for automatic horizontal scaling
+- ✅ **Persistence**: MySQL data persisted using PVC
+- ✅ **Service Discovery**: Cross-namespace communication established
+- ✅ **Ingress**: External access configured via Ingress controller
+- ✅ **Security**: Proper secret management and namespace isolation
+- ✅ **Continuous Deployment**: By run `make deploy`
 
-## 📊 Verification & Testing
-
-### Check Deployment Status
-
-**Screenshot 1: Cluster Overview**
-```bash
-kubectl get nodes
-kubectl get namespaces
-```
-![Cluster Overview](screenshots/namespaces.png)
-
-**Screenshot 2: MySQL Namespace Resources**
-```bash
-kubectl get all,pvc,secrets -n mysql
-```
-![MySQL Namespace Resources](screenshots/mysql-pvc-secrets.png)
-
-**Screenshot 3: Node.js CRUD Namespace Resources**  
-```bash
-kubectl get all,configmap,secrets,ingress,hpa -n nodejs-crud
-```
-![Node.js CRUD Namespace Resources](screenshots/NODEJS-CRUD-resources.png)
-
-### Application Testing
-
-**Screenshot 4: Application Access**
-```bash
-curl -I http://localhost/
-curl http://localhost/ | head -20
-```
-![Application Access Testing](screenshots/APPLICATION-ACCESS-TESTING.png)
 
 ## 🔧 Key Kubernetes Features Implemented
 
@@ -199,7 +150,7 @@ kubectl get hpa -n nodejs-crud -w
 
 ## 📈 Monitoring & Observability
 
-### Option 1: Basic Monitoring
+### Basic Monitoring
 ```bash
 # Monitor resource usage
 kubectl top pods -n nodejs-crud
@@ -209,60 +160,55 @@ kubectl top pods -n mysql
 kubectl get events -n nodejs-crud --sort-by='.lastTimestamp'
 ```
 
-### Option 2: Advanced Monitoring (Prometheus + Grafana)
+## 🚀 Quick Start
+
+### Prerequisites
+- Docker Desktop or Docker Engine
+- kind (Kubernetes in Docker)
+- kubectl CLI tool
+
+### 1. One-Click Provision & Deploy
 ```bash
-# Install kube-prometheus-stack
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
-
-# Access Grafana (after port-forward)
-kubectl port-forward svc/monitoring-grafana -n monitoring 3000:80
+make init   # creates kind cluster, builds image, loads it and installs Helm chart
 ```
 
-## 🗂️ File Structure
+## 📊 Verification & Testing
+
+### Check Deployment Status
+
+**Screenshot 1: Cluster Overview**
+```bash
+kubectl get nodes
+kubectl get namespaces
 ```
-assignment2-k8s/
-├── k8s/
-│   ├── 00-namespaces.yaml         # Namespace definitions
-│   ├── secret-mysql.yaml          # MySQL credentials
-│   ├── pvc-mysql.yaml             # Persistent storage for MySQL
-│   ├── mysql-deploy.yaml          # MySQL deployment & service
-│   ├── configmap-app.yaml         # App configuration
-│   ├── app-deploy.yaml            # Node.js app deployment & service
-│   ├── hpa.yaml                   # Horizontal Pod Autoscaler
-│   ├── ingress.yaml               # Ingress configuration
-│   └── deploy-namespaced.sh       # Automated deployment script
-├── screenshots/                   # Documentation screenshots
-│   ├── namespaces.png            # Cluster overview
-│   ├── mysql-pvc-secrets.png     # MySQL namespace resources
-│   ├── NODEJS-CRUD-resources.png # Node.js app namespace resources
-│   └── APPLICATION-ACCESS-TESTING.png # Application testing
-├── app/Dockerfile                  # Container image definition
-├── kind-cluster.yaml             # Kind cluster configuration
-└── README.md                     # This documentation
+![Cluster Overview](screenshots/namespaces.png)
+
+**Screenshot 2: MySQL Namespace Resources**
+```bash
+kubectl get all,pvc,secrets -n mysql
 ```
+![MySQL Namespace Resources](screenshots/mysql-pvc-secrets.png)
+
+**Screenshot 3: Node.js CRUD Namespace Resources**  
+```bash
+kubectl get all,configmap,secrets,ingress,hpa -n nodejs-crud
+```
+![Node.js CRUD Namespace Resources](screenshots/NODEJS-CRUD-resources.png)
+
+### Application Testing
+
+**Screenshot 4: Application Access**
+```bash
+curl -I http://localhost/
+curl http://localhost/ | head -20
+```
+![Application Access Testing](screenshots/APPLICATION-ACCESS-TESTING.png)
+
 
 ## 🧹 Cleanup
 
 ```bash
-# complete cleanup
-kubectl delete -f k8s/
-
+# Remove Helm release & namespaces
 # Destroy the kind cluster
-kind delete cluster --name symbiosis
+make destroy
 ```
-
-## 🎯 Assignment Objectives Achieved
-
-- ✅ **Containerization**: Node.js CRUD app properly containerized
-- ✅ **Namespace Organization**: MySQL and app components separated
-- ✅ **Health Checks**: Liveness and readiness probes implemented
-- ✅ **Scaling**: HPA configured for automatic horizontal scaling
-- ✅ **Persistence**: MySQL data persisted using PVC
-- ✅ **Service Discovery**: Cross-namespace communication established
-- ✅ **Ingress**: External access configured via Ingress controller
-- ✅ **Security**: Proper secret management and namespace isolation
-
----
-
-> **Note**: This assignment demonstrates production-ready Kubernetes deployment patterns with proper namespace isolation, health monitoring, and automatic scaling capabilities.

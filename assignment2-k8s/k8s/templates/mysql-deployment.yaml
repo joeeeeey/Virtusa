@@ -2,7 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
-  namespace: mysql
+  namespace: {{ .Values.mysqlNamespace }}
+  labels:
+    app: mysql
 spec:
   replicas: 1
   selector:
@@ -15,7 +17,7 @@ spec:
     spec:
       containers:
       - name: mysql
-        image: docker.m.daocloud.io/mysql:8.0
+        image: "docker.m.daocloud.io/{{ .Values.mysql.image }}:{{ .Values.mysql.tag }}"
         envFrom:
         - secretRef:
             name: mysql-secret
@@ -38,9 +40,10 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql
-  namespace: mysql
+  namespace: {{ .Values.mysqlNamespace }}
 spec:
   ports:
   - port: 3306
+    targetPort: 3306
   selector:
     app: mysql 

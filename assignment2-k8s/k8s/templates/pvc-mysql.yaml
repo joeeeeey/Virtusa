@@ -2,10 +2,10 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: mysql-pvc
-  namespace: mysql
+  namespace: {{ .Values.mysqlNamespace }}
 spec:
-  accessModes: 
+  accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi 
+      storage: {{ .Values.mysql.pvcStorage }} 

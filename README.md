@@ -5,7 +5,7 @@ This repository contains **two independent solutions** matching the CC4.0 DevOps
 | Assignment | Folder | One-click README |
 |------------|--------|------------------|
 | **1. AWS Cloud Migration** – provision a 3-tier AWS stack with Terraform and host a Node.js MySQL CRUD app | `assignment1-aws-cloud-migration` | [Detailed guide](assignment1-aws-cloud-migration/README.md) |
-| **2. Kubernetes Deployment** – run the same app on a local k8s cluster (Minikube) with manifests for Deploy/Service/Ingress/PV | `assignment2-k8s` | [Detailed guide](assignment2-k8s/README.md) |
+| **2. Kubernetes Deployment** – run the same app on a local **kind** cluster, delivered as a Helm chart with a one-click Makefile | `assignment2-k8s` | [Detailed guide](assignment2-k8s/README.md) |
 
 ---
 
@@ -22,9 +22,9 @@ This repository contains **two independent solutions** matching the CC4.0 DevOps
 
 ### Assignment 2 highlights
 
-* Minikube manifests include Deployment, Service, Ingress and PVC.
-* A liveness probe checks the root path returns **200**.
-* Example of horizontal scaling via `kubectl scale` and notes on HPA.
+* Helm chart bundles Deployment, Service, Ingress, PVC & HPA – namespaced by design.
+* `make init` spins up a kind cluster, builds & loads the image, then installs the chart.
+* Liveness / readiness probes + HPA (CPU) showcase production readiness.
 
 ---
 
@@ -39,8 +39,7 @@ terraform apply -auto-approve
 
 # Assignment 2 – Kubernetes
 cd assignment2-k8s
-minikube start
-kubectl apply -f k8s/
+make init   # create cluster, build image, deploy chart (≈90 s)
 ```
 
 For full instructions, diagrams and cost/scaling notes please follow the links in the table above.

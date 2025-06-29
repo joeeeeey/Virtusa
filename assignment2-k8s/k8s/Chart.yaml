@@ -1,0 +1,6 @@
+apiVersion: v2
+name: nodejs-mysql
+version: 0.1.0
+description: A Helm chart for a Node.js CRUD app with MySQL backend
+appVersion: "1.0"
+type: application 
